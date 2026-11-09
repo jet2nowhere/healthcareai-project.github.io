@@ -2,35 +2,8 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FutureCare AI Diagnostic Simulator</title>
-<style>
-:root{--bg:#eef0f3;--card:#fff;--ink:#202124;--mut:#5f6368;--line:#c9ced6;--acc:#1f5fbf;--ok:#1e7b34;--bad:#b3261e;--warn:#9a6700;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181c;--card:#1d2127;--ink:#e6e8eb;--mut:#9aa0a6;--line:#3a4048;--acc:#6ea0f0;--ok:#6cc380;--bad:#f28b82;--warn:#e3b341;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#15181c;--card:#1d2127;--ink:#e6e8eb;--mut:#9aa0a6;--line:#3a4048;--acc:#6ea0f0;--ok:#6cc380;--bad:#f28b82;--warn:#e3b341;color-scheme:dark}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
-header{background:var(--card);border-bottom:1px solid var(--line);padding:14px 20px}
-header div{max-width:1100px;margin:auto}h1{font-size:20px;margin:0}header p{margin:4px 0 0;color:var(--mut)}
-.layout{max-width:1100px;margin:auto;padding:16px 20px;display:grid;gap:16px;grid-template-columns:320px 1fr}
-@media(max-width:820px){.layout{grid-template-columns:1fr}}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:14px;margin-bottom:16px}
-h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:0 0 10px}
-.row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 10px;border-radius:4px}
-button[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:#fff}
-button.full{width:100%;margin-top:6px}
-label.opt{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;cursor:pointer}
-label.opt input{margin-top:3px}small{display:block;color:var(--mut)}
-input[type=range]{width:100%}
-table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-size:12px;color:var(--mut);font-weight:600}
-.g{color:var(--ok);font-weight:600}.b{color:var(--bad);font-weight:600}.w{color:var(--warn);font-weight:600}
-ul{margin:0;padding-left:18px}li{margin-bottom:5px}
-.verdict{border-left:4px solid var(--acc);padding:8px 12px;background:var(--bg);margin-top:10px}
-svg{width:100%;height:auto;display:block}
-.note{color:var(--mut);font-size:12.5px}
-details summary{cursor:pointer;font-weight:600}
-a{color:var(--acc)}.src li{margin-bottom:8px;word-break:break-word}
-.scroll{overflow-x:auto}
-</style></head><body>
+<link rel="stylesheet" href="style.css">
+</head><body>
 <header><div><h1>FutureCare Hospital: AI Diagnostic Simulator</h1>
 <p>Test the hospital’s choices over 12 simulated months and see which benefits and risks appear. A model for discussion, not real hospital data.</p></div></header>
 <div class="layout">
