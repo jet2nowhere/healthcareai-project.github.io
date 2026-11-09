@@ -1,79 +1,114 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>FutureCare Reading Room Game</title>
+<title>FutureCare AI Diagnostic Simulator</title>
 <link rel="stylesheet" href="style.css">
 </head><body>
-<header><div><h1>FutureCare Hospital: The Reading Room</h1>
-<p>You are the radiologist on shift. The AI gives a suggestion on each scan; you decide. 20 patients, 28 minutes. <a href="index.html">Back to the simulator</a></p></div></header>
+<header><div><h1>FutureCare Hospital: AI Diagnostic Simulator</h1>
+<p>Test the hospital’s choices over 12 simulated months and see which benefits and risks appear. A model for discussion, not real hospital data.</p></div></header>
 <div class="layout">
 <aside>
-<div class="panel"><h2>Your shift</h2>
-<table id="stats"></table>
-<div class="row" style="margin-top:12px"><button id="audit" class="full">Run bias audit (3 min)</button></div>
-<p class="note" id="auditnote">An audit shows how accurate the AI has been for each patient group so far, and labels each patient’s group.</p>
-<button class="full" id="again">New shift</button>
-<p class="note">A teaching game, not real clinical data. Accuracy rates are illustrative and echo the simulator’s assumptions.</p></div>
+<div class="panel"><h2>Presets</h2>
+<div class="row"><button data-p="none">No AI</button><button data-p="rush">Rush it</button><button data-p="ours">Our plan</button></div>
+<h2>How the AI is used</h2>
+<div class="row" id="mode"><button data-v="0">No AI</button><button data-v="1">Advisory</button><button data-v="2">Auto-approve</button></div>
+<p class="note" id="modenote"></p>
+<h2>Conditions</h2>
+<label class="opt"><input type="checkbox" id="signoff"><span>Doctor signs every case<small>Overrides never penalised. Adds doctor time.</small></span></label>
+<label class="opt"><input type="checkbox" id="audit"><span>Local validation and bias audit<small>Test on our own patients, by sex, age, ethnicity</small></span></label>
+<label class="opt"><input type="checkbox" id="safe"><span>Data safeguards<small>Encryption, local storage, vendor contract</small></span></label>
+<label class="opt"><input type="checkbox" id="train"><span>Training and liability policy<small>Before launch</small></span></label>
+<label class="opt"><input type="checkbox" id="phase"><span>Phased rollout and budget cap<small>Pilot first, slower benefits</small></span></label>
+<h2>Patients per month: <span id="volv"></span></h2>
+<input type="range" id="vol" min="2000" max="9000" step="500" aria-label="Patients per month">
+<button class="full" id="reroll">Re-roll random events</button>
+<button class="full" id="cmp">Compare the three presets</button></div>
 </aside>
 <main id="out"></main>
 </div>
+<div class="layout" style="grid-template-columns:1fr;padding-top:0">
+<div class="panel"><details><summary>Model assumptions (what each number is based on)</summary>
+<ul style="margin-top:10px">
+<li>AI-supported reading cuts radiologist workload by about 44% at full adoption, and finds about 29% more cancers without more false positives (Hernström et al., 2025). Auto-approve is assumed slightly faster still.</li>
+<li>Vendor-reported accuracy often does not hold locally. Without local validation, only about half of the expected benefit is assumed, and false alarms rise from 6% to 18% of scans (Wong et al., 2021).</li>
+<li>If the AI is wrong and the doctor has stopped checking, the error reaches the patient. Over-reliance grows monthly unless sign-off and training slow it (Goddard et al., 2012).</li>
+<li>Without a bias audit, the AI misses about 35% more findings in under-represented patients, versus about 8% with one (Seyyed-Kalantari et al., 2021).</li>
+<li>A breach costs $9.77M on average in healthcare; safeguards are assumed to cut the damage by 40% and the chance by 70% (IBM Security, 2024).</li>
+<li>Legal exposure rises with AI-influenced errors; a liability policy lowers it (Price et al., 2019).</li>
+<li>Conditions have costs: sign-off adds doctor time, a phased rollout delays benefits, and safeguards and training add spending. Cost figures and event timing are our own illustrative assumptions.</li></ul></details></div>
+<div class="panel src"><h2>Sources</h2><ul>
+<li>Adams, R., et al. (2022). Prospective, multi-site study of patient outcomes after implementation of the TREWS machine learning-based early warning system for sepsis. <i>Nature Medicine, 28</i>(7), 1455–1460. <a href="https://doi.org/10.1038/s41591-022-01894-0" target="_blank" rel="noopener">https://doi.org/10.1038/s41591-022-01894-0</a></li>
+<li>Goddard, K., Roudsari, A., &amp; Wyatt, J. C. (2012). Automation bias: A systematic review of frequency, effect mediators, and mitigators. <i>Journal of the American Medical Informatics Association, 19</i>(1), 121–127. <a href="https://doi.org/10.1136/amiajnl-2011-000089" target="_blank" rel="noopener">https://doi.org/10.1136/amiajnl-2011-000089</a></li>
+<li>Hernström, V., et al. (2025). Screening performance and characteristics of breast cancer detected in the Mammography Screening with Artificial Intelligence trial (MASAI). <i>The Lancet Digital Health, 7</i>(3), e175–e183. <a href="https://doi.org/10.1016/S2589-7500(24)00267-X" target="_blank" rel="noopener">https://doi.org/10.1016/S2589-7500(24)00267-X</a></li>
+<li>IBM Security. (2024). <i>Cost of a data breach report 2024</i>. IBM. <a href="https://www.ibm.com/reports/data-breach" target="_blank" rel="noopener">https://www.ibm.com/reports/data-breach</a></li>
+<li>Obermeyer, Z., Powers, B., Vogeli, C., &amp; Mullainathan, S. (2019). Dissecting racial bias in an algorithm used to manage the health of populations. <i>Science, 366</i>(6464), 447–453. <a href="https://doi.org/10.1126/science.aax2342" target="_blank" rel="noopener">https://doi.org/10.1126/science.aax2342</a></li>
+<li>Price, W. N., Gerke, S., &amp; Cohen, I. G. (2019). Potential liability for physicians using artificial intelligence. <i>JAMA, 322</i>(18), 1765–1766. <a href="https://doi.org/10.1001/jama.2019.15064" target="_blank" rel="noopener">https://doi.org/10.1001/jama.2019.15064</a></li>
+<li>Seyyed-Kalantari, L., et al. (2021). Underdiagnosis bias of artificial intelligence algorithms applied to chest radiographs in under-served patient populations. <i>Nature Medicine, 27</i>(12), 2176–2182. <a href="https://doi.org/10.1038/s41591-021-01595-0" target="_blank" rel="noopener">https://doi.org/10.1038/s41591-021-01595-0</a></li>
+<li>Wong, A., et al. (2021). External validation of a widely implemented proprietary sepsis prediction model in hospitalized patients. <i>JAMA Internal Medicine, 181</i>(8), 1065–1070. <a href="https://doi.org/10.1001/jamainternmed.2021.2626" target="_blank" rel="noopener">https://doi.org/10.1001/jamainternmed.2021.2626</a></li>
+<li>World Health Organization. (2021). <i>Ethics and governance of artificial intelligence for health: WHO guidance</i>. <a href="https://www.who.int/publications/i/item/9789240029200" target="_blank" rel="noopener">https://www.who.int/publications/i/item/9789240029200</a></li></ul></div></div>
 <script>
 function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
-const $=id=>document.getElementById(id),N=20,BUDGET=28;
-const NA=["Persistent cough for six weeks","Family history of the disease","Unexplained weight loss","Pain that is getting worse","Abnormal result on a previous test"];
-const NN=["Routine screening, no symptoms","Symptoms resolved after treatment","Follow-up of a known benign finding","No relevant history","Screening requested by patient"];
-const GL=["Well represented in training data","Under-represented in training data"];
-let G;
-function deal(){
- const r=rng(Math.floor(Math.random()*99999)+1),cs=[];
- for(let i=0;i<N;i++){
-  const grp=r()<.3?1:0,truth=r()<.35,ok=r()<(grp?.72:.92),ai=ok?truth:!truth,conf=Math.round(ok?70+r()*28:62+r()*33),al=r()<.75,note=(al?truth:!truth)?NA[Math.floor(r()*5)]:NN[Math.floor(r()*5)];
-  cs.push({id:"P-"+(1000+Math.floor(r()*9000)),age:30+Math.floor(r()*56),grp,truth,ai,conf,note,r2:r()<.97?truth:!truth});
+function sim(c,seed){
+ const r=rng(seed),ev=[];let cost=0,br=0,law=0,o=0,cum=0,bcum=0,ws=0,bws=0,gs=0,gn=0,fa=0,extra=0,left=0;
+ const pool=[0,1,2,3,4].sort(()=>r()-.5).slice(0,3),when=[2+Math.floor(r()*3),5+Math.floor(r()*3),9+Math.floor(r()*3)],sch={};pool.forEach((p,i)=>sch[when[i]]=p);
+ const cs=[0],bs=[0],ai=c.mode>0,val=c.audit?1:.5,falseRate=c.audit?.06:.18;
+ for(let m=1;m<=12;m++){
+  const ramp=!ai?0:c.phase?(m<=3?.3:m<=6?.6:1):Math.min(1,m/2);
+  const load=c.vol/5000,abn=c.vol*.1,m0=.05*(.7+.3*load*load);
+  let speed=(c.mode==1?.44:c.mode==2?.55:0)*val;
+  speed*=1-(falseRate-.06)*2; if(c.signoff&&c.mode==1)speed*=.9;
+  ws+=20*load*load*(1-speed*ramp);bws+=20*load*load;
+  if(c.mode==2)o=.9;else if(ai){let g=.06;if(c.signoff)g*=.5;if(c.train)g*=.6;o=Math.min(1,o+g)}
+  if(ai&&m==1)cost+=(c.phase?.7:1.2)+(c.train?.15:0)+(c.safe?.25:0)+(c.audit?.2:0);
+  if(ai)cost+=.06;
+  const e=sch[m];
+  if(ai&&e!==undefined){
+   if(e==0){if(c.audit)ev.push({m,g:1,t:"Bias audit finds lower accuracy in elderly patients. Model retrained before harm."});else{extra=abn*.015;left=3;ev.push({m,g:0,t:"AI quietly misses more findings in elderly patients. Nobody is monitoring by group."})}}
+   if(e==1){if(c.safe)ev.push({m,g:1,t:"Vendor proposes overseas storage. Contract terms block it."});else{cost+=1.5;ev.push({m,g:0,t:"Vendor moves data overseas. Regulatory fine of $1.5M."})}}
+   if(e==2){if(c.phase){cost+=.2;ev.push({m,g:1,t:"Vendor raises prices. Budget cap absorbs it ($0.2M)."})}else{cost+=1.5;ev.push({m,g:0,t:"Vendor raises prices. No cap, so an extra $1.5M."})}}
+   if(e==3)ev.push({m,g:1,t:"AI flags a rare tumour that doctors had overlooked."});
+   if(e==4){if(c.signoff&&c.train)ev.push({m,g:1,t:"Override rate falls below 1%. Sign-off policy forces real reviews; staff retrained."});else{o=Math.min(1,o+.25);ev.push({m,g:0,t:"Override rate falls below 1%. Doctors are rubber-stamping; over-reliance rises."})}}
+  }
+  const red=(c.mode==2?.30:.25)*val;
+  const mr=m0*(1-red*ramp)+.05*o*ramp,bias=c.audit?.08:.35,mg=mr*(1+bias*ramp);
+  let mis=abn*(.7*mr+.3*mg);if(left>0){mis+=extra;left--}
+  cum+=mis;bcum+=abn*m0;cs.push(cum);bs.push(bcum);
+  if(ai){gs+=mg/mr-1;gn++;fa+=falseRate*ramp;
+   const p=.01*(c.safe?.3:1);if(r()<p){br++;const k=9.77*(c.safe?.6:1);cost+=k;ev.push({m,g:0,t:"Data breach. "+(c.safe?"Safeguards limited the damage":"Patient records exposed")+" ($"+k.toFixed(1)+"M)."})}
+   law+=abn*.05*o*ramp*.03*.2*(c.train?.4:1)*(c.mode==2?2:1)}
  }
- G={cs,i:0,time:BUDGET,audited:false,done:[],fb:null,seen:0};
-}
-function acc(g){const d=G.done.filter(x=>x.grp==g);return d.length?{n:d.length,p:Math.round(100*d.filter(x=>x.aiOk).length/d.length)}:null}
-function decide(kind){
- const c=G.cs[G.i],cost=kind=="second"?3:1;if(G.time<cost)return;
- G.time-=cost;
- let d=kind=="agree"?c.ai:kind=="override"?!c.ai:c.r2;
- const aiOk=c.ai==c.truth,right=d==c.truth;
- G.done.push({grp:c.grp,aiOk,kind,right,missed:c.truth&&!d,fa:!c.truth&&d,agreedWrong:kind=="agree"&&!aiOk});
- let t="Truth: "+(c.truth?"abnormal":"normal")+". You called it "+(d?"abnormal":"normal")+". ";
- if(kind=="second")t+="The second reader said "+(c.r2?"abnormal":"normal")+". ";
- t+=right?"Correct.":(c.truth&&!d?"A finding was missed.":"An unnecessary alarm and extra tests for the patient.");
- if(!aiOk)t+=kind=="agree"?" The AI was wrong and you went along with it.":kind=="override"?" The AI was wrong. Good catch.":" The AI was wrong; the second read protected you.";
- else if(kind=="override")t+=" The AI was right, so the override cost you.";
- G.fb={t,right};G.i++;render();
-}
-function render(){
- const D=G.done,n=D.length,ok=D.filter(x=>x.right).length;
- $("stats").innerHTML='<tr><td>Time left</td><td>'+G.time+' min</td></tr><tr><td>Patients seen</td><td>'+n+' of '+N+'</td></tr><tr><td>Correct calls</td><td>'+ok+'</td></tr><tr><td>Missed findings</td><td class="'+(D.some(x=>x.missed)?"b":"")+'">'+D.filter(x=>x.missed).length+'</td></tr><tr><td>False alarms</td><td>'+D.filter(x=>x.fa).length+'</td></tr>';
- const ended=G.i>=N||G.time<1;
- $("audit").disabled=G.audited||G.time<3||ended;
- let h="";
- if(G.fb&&!ended)h+='<div class="panel"><h2>Last case</h2><div class="verdict" style="border-color:var(--'+(G.fb.right?"ok":"bad")+')">'+G.fb.t+'</div></div>';
- if(G.audited){const a=acc(0),b=acc(1);h+='<div class="panel"><h2>Bias audit: AI accuracy so far</h2><div class="scroll"><table><tr><th>Patient group</th><th>Cases</th><th>AI correct</th></tr><tr><td>'+GL[0]+'</td><td>'+(a?a.n:0)+'</td><td>'+(a?a.p+"%":"no data yet")+'</td></tr><tr><td>'+GL[1]+'</td><td>'+(b?b.n:0)+'</td><td>'+(b?b.p+"%":"no data yet")+'</td></tr></table></div></div>'}
- if(ended){h+=final();$("out").innerHTML=h;return}
- const c=G.cs[G.i];
- h='<div class="panel"><h2>Case '+(G.i+1)+' of '+N+'</h2><div class="scroll"><table><tr><td>Patient</td><td>'+c.id+', age '+c.age+(G.audited?' <span class="note">('+GL[c.grp]+')</span>':'')+'</td></tr><tr><td>Clinical note</td><td>'+c.note+'</td></tr><tr><td>AI suggestion</td><td><b class="'+(c.ai?"b":"g")+'">'+(c.ai?"Abnormal":"Normal")+'</b>, confidence '+c.conf+'%</td></tr></table></div>'+
- '<div class="row" style="margin-top:12px"><button data-k="agree">Agree with AI (1 min)</button><button data-k="override">Override AI (1 min)</button><button data-k="second"'+(G.time<3?' disabled':'')+'>Ask for a second read (3 min)</button></div>'+
- '<p class="note">The clinical note is a useful clue but not always right. The AI’s confidence is not a guarantee either.</p></div>'+h;
- $("out").innerHTML=h;
- document.querySelectorAll("button[data-k]").forEach(b=>b.onclick=()=>decide(b.dataset.k));
-}
-function final(){
- const D=G.done,n=D.length,left=N-n,ok=D.filter(x=>x.right).length,m=D.filter(x=>x.missed).length,fa=D.filter(x=>x.fa).length;
- const aw=D.filter(x=>x.agreedWrong).length,aiWrong=D.filter(x=>!x.aiOk).length,sr=D.filter(x=>x.kind=="second").length;
- const a=acc(0),b=acc(1),gap=a&&b?a.p-b.p:null;
- let v;
- if(aiWrong&&aw/aiWrong>.5)v="You went along with the AI on "+aw+" of the "+aiWrong+" cases where it was wrong. This is automation bias, the over-reliance the simulator tracks. Sign-off rules, training and checking results by patient group all aim to reduce it.";
- else if(aiWrong)v="You caught "+(aiWrong-aw)+" of the "+aiWrong+" AI mistakes. Staying alert while using a mostly accurate tool is exactly what the simulator’s “doctor signs every case” and training conditions try to protect.";
- else v="The AI happened to be right every time this shift. Replay: over a year, it will not be.";
- if(left>0)v+=" You ran out of time with "+left+" patient(s) still waiting, which is the cost of too many careful checks without enough capacity.";
- return '<div class="panel"><h2>Shift report</h2><div class="scroll"><table><tr><th>Measure</th><th>Result</th></tr><tr><td>Correct calls</td><td>'+ok+' of '+n+'</td></tr><tr><td>Missed findings</td><td>'+m+'</td></tr><tr><td>False alarms</td><td>'+fa+'</td></tr><tr><td>Patients left waiting</td><td>'+left+'</td></tr><tr><td>Second reads used</td><td>'+sr+'</td></tr><tr><td>AI correct overall</td><td>'+(n?Math.round(100*D.filter(x=>x.aiOk).length/n):0)+'%</td></tr>'+(gap!==null?'<tr><td>AI accuracy gap between groups</td><td>'+gap+' points</td></tr>':'')+'</table></div><div class="verdict">'+v+'</div>'+(G.audited?'':'<p class="note">You did not run a bias audit. The AI was less accurate for under-represented patients, and you would not have known.</p>')+'<button class="full" onclick="deal();render()">Play again</button></div>';
-}
-$("audit").onclick=()=>{if(G.audited||G.time<3)return;G.time-=3;G.audited=true;render()};
-$("again").onclick=()=>{deal();render()};
-deal();render();
+ cost+=law;ev.sort((a,b)=>a.m-b.m);
+ return{cs,bs,ev,wait:ws/12,bwait:bws/12,miss:cum,bmiss:bcum,gap:gn?gs/gn:0,o,br,cost,law,fa:ai?fa/12:0}}
+const P={none:{mode:0,signoff:0,audit:0,safe:0,train:0,phase:0},rush:{mode:2,signoff:0,audit:0,safe:0,train:0,phase:0},ours:{mode:1,signoff:1,audit:1,safe:1,train:1,phase:1}};
+const S={mode:1,signoff:1,audit:1,safe:1,train:1,phase:1,vol:5000};let seed=7;
+const $=id=>document.getElementById(id),f1=x=>x.toFixed(1);
+const MN=["Doctors read everything as today.","AI gives a recommendation; the doctor decides.","AI clears normal-looking scans on its own; fewer human checks."];
+function ui(){document.querySelectorAll("#mode button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.v===S.mode));["signoff","audit","safe","train","phase"].forEach(k=>$(k).checked=!!S[k]);$("vol").value=S.vol;$("volv").textContent=S.vol.toLocaleString();$("modenote").textContent=MN[S.mode]}
+function render(){ui();const R=sim(S,seed),saved=R.bmiss-R.miss,ai=S.mode>0;
+ const ck=[["Over-reliance under 50%",R.o<.5,Math.round(R.o*100)+"%","conditions 1 and 4"],["Accuracy gap under 15%",R.gap<.15,Math.round(R.gap*100)+"%","condition 2"],["No data breach",R.br==0,R.br+" incident(s)","condition 3"],["Legal exposure under $0.3M",R.law<.3,"$"+R.law.toFixed(2)+"M","conditions 1 and 4"],["Total cost under $3M budget",R.cost<3,"$"+R.cost.toFixed(1)+"M","condition 5"]];
+ const fails=ck.filter(c=>!c[1]);let v;
+ if(!ai)v="With no AI there is no new risk, but waits stay at "+f1(R.wait)+" hours and about "+Math.round(R.bmiss)+" findings are missed. This is the cost of inaction.";
+ else if(!fails.length&&saved>0)v="All five risk checks passed and about "+Math.round(saved)+" fewer findings were missed. Waits fell from "+f1(R.bwait)+" to "+f1(R.wait)+" hours. This matches our recommendation: implement under conditions.";
+ else v="The AI changed missed findings by "+(saved>=0?"-":"+")+Math.abs(Math.round(saved))+", but "+fails.length+" check(s) failed: "+fails.map(c=>c[0]).join("; ")+". Relevant: "+fails[0][3]+".";
+ const W=560,H=200,mx=Math.max(R.bs[12],R.cs[12],1)*1.1,px=i=>40+i*(W-60)/12,py=y=>H-26-y/mx*(H-44);
+ const ln=(a,c,d)=>'<polyline fill="none" stroke="'+c+'" stroke-width="2.5" '+(d?'stroke-dasharray="6 5"':'')+' points="'+a.map((y,i)=>px(i)+","+py(y)).join(" ")+'"/>';
+ const svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Cumulative missed findings over 12 months"><line x1="40" y1="'+(H-26)+'" x2="'+(W-20)+'" y2="'+(H-26)+'" stroke="var(--line)"/>'+ln(R.bs,"var(--mut)",1)+(ai?ln(R.cs,"var(--acc)"):"")+'<text x="40" y="14" fill="var(--mut)" font-size="12">Cumulative missed findings (dashes)</text><text x="'+(W-20)+'" y="'+(H-8)+'" fill="var(--mut)" font-size="12" text-anchor="end">Month 12</text>'+R.ev.map(e=>'<circle cx="'+px(e.m)+'" cy="'+py(R.cs[e.m])+'" r="5" fill="'+(e.g?"var(--ok)":"var(--bad)")+'"/>').join("")+'</svg>';
+ const cl=(a,b)=>a<b?"g":a>b?"b":"";
+ const row=(n,a,b,fmt,lowGood)=>'<tr><td>'+n+'</td><td>'+fmt(a)+'</td><td class="'+(ai?(lowGood?cl(b,a):cl(a,b)):"")+'">'+fmt(b)+'</td></tr>';
+ $("out").innerHTML='<div class="panel"><h2>Results after 12 months</h2><div class="scroll"><table><tr><th>Measure</th><th>No AI</th><th>This scenario</th></tr>'+
+ row("Average wait for a report (hours)",R.bwait,R.wait,f1,1)+row("Findings missed",R.bmiss,R.miss,x=>Math.round(x),1)+
+ '<tr><td>Accuracy gap, under-represented patients</td><td>0%</td><td>'+Math.round(R.gap*100)+'%</td></tr><tr><td>Over-reliance index</td><td>0%</td><td>'+Math.round(R.o*100)+'%</td></tr>'+
+ '<tr><td>Scans flagged unnecessarily</td><td>0%</td><td>'+Math.round(R.fa*100)+'%</td></tr><tr><td>Total cost incl. incidents</td><td>$0M</td><td>$'+R.cost.toFixed(1)+'M</td></tr></table></div>'+
+ '<div class="verdict">'+v+'</div></div>'+
+ '<div class="panel"><h2>Missed findings over time</h2>'+svg+'<p class="note">Green dots: events handled well. Red dots: events that caused harm. (The graph was created using AI) </p></div>'+
+ '<div class="panel"><h2>Risk checks</h2><ul>'+ck.map(c=>'<li><span class="'+(c[1]?"g":"b")+'">'+(c[1]?"Pass":"Fail")+'</span> '+c[0]+' ('+c[2]+')'+(c[1]||!ai?"":' <span class="note">fix: '+c[3]+'</span>')+'</li>').join("")+'</ul></div>'+
+ '<div class="panel"><h2>What happened this year</h2>'+(R.ev.length?'<ul>'+R.ev.map(e=>'<li><b>Month '+e.m+':</b> <span class="'+(e.g?"g":"b")+'">'+e.t+'</span></li>').join("")+'</ul>':'<p class="note">No events. Without AI nothing new can go wrong, and nothing new is gained.</p>')+'</div><div id="cmpbox"></div>'}
+function compare(){const rows=[["No AI",P.none],["Rush it",P.rush],["Our plan",P.ours]].map(([n,p])=>{const R=sim(Object.assign({vol:S.vol},p),seed);return'<tr><td>'+n+'</td><td>'+f1(R.wait)+' h</td><td>'+Math.round(R.miss)+'</td><td>'+Math.round(R.gap*100)+'%</td><td>'+R.br+'</td><td>$'+R.cost.toFixed(1)+'M</td></tr>'}).join("");
+ $("cmpbox").innerHTML='<div class="panel"><h2>Same year, same random events, three strategies</h2><div class="scroll"><table><tr><th>Strategy</th><th>Wait</th><th>Missed</th><th>Bias gap</th><th>Breaches</th><th>Cost</th></tr>'+rows+'</table></div></div>'}
+document.querySelectorAll("#mode button").forEach(b=>b.onclick=()=>{S.mode=+b.dataset.v;render()});
+["signoff","audit","safe","train","phase"].forEach(k=>$(k).onchange=()=>{S[k]=$(k).checked?1:0;render()});
+$("vol").oninput=()=>{S.vol=+$("vol").value;render()};
+document.querySelectorAll("button[data-p]").forEach(b=>b.onclick=()=>{Object.assign(S,P[b.dataset.p]);render()});
+$("reroll").onclick=()=>{seed=Math.floor(Math.random()*9999)+1;render()};$("cmp").onclick=()=>{render();compare()};
+render();
 </script></body></html>
