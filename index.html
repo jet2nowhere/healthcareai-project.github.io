@@ -100,7 +100,8 @@ function render(){ui();const R=sim(S,seed),saved=R.bmiss-R.miss,ai=S.mode>0;
  '<tr><td>Accuracy gap, under-represented patients</td><td>0%</td><td>'+Math.round(R.gap*100)+'%</td></tr><tr><td>Over-reliance index</td><td>0%</td><td>'+Math.round(R.o*100)+'%</td></tr>'+
  '<tr><td>Scans flagged unnecessarily</td><td>0%</td><td>'+Math.round(R.fa*100)+'%</td></tr><tr><td>Total cost incl. incidents</td><td>$0M</td><td>$'+R.cost.toFixed(1)+'M</td></tr></table></div>'+
  '<div class="verdict">'+v+'</div></div>'+
- '<div class="panel"><h2>Missed findings over time</h2>'+svg+'<p class="note">Green dots: events handled well. Red dots: events that caused harm.</p></div>'+
+ '<div class="panel"><h2>Missed findings over time</h2>'+svg+'<p class="note">Green dots: events handled well. Red dots: events that caused harm. 
+  (The graph was created using AI)</p></div>'+
  '<div class="panel"><h2>Risk checks</h2><ul>'+ck.map(c=>'<li><span class="'+(c[1]?"g":"b")+'">'+(c[1]?"Pass":"Fail")+'</span> '+c[0]+' ('+c[2]+')'+(c[1]||!ai?"":' <span class="note">fix: '+c[3]+'</span>')+'</li>').join("")+'</ul></div>'+
  '<div class="panel"><h2>What happened this year</h2>'+(R.ev.length?'<ul>'+R.ev.map(e=>'<li><b>Month '+e.m+':</b> <span class="'+(e.g?"g":"b")+'">'+e.t+'</span></li>').join("")+'</ul>':'<p class="note">No events. Without AI nothing new can go wrong, and nothing new is gained.</p>')+'</div><div id="cmpbox"></div>'}
 function compare(){const rows=[["No AI",P.none],["Rush it",P.rush],["Our plan",P.ours]].map(([n,p])=>{const R=sim(Object.assign({vol:S.vol},p),seed);return'<tr><td>'+n+'</td><td>'+f1(R.wait)+' h</td><td>'+Math.round(R.miss)+'</td><td>'+Math.round(R.gap*100)+'%</td><td>'+R.br+'</td><td>$'+R.cost.toFixed(1)+'M</td></tr>'}).join("");
