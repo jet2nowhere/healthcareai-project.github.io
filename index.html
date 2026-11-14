@@ -2,66 +2,383 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FutureCare AI Simulator</title>
-<link rel="stylesheet" href="style.css">
+<style>
+/* Layout: one column on phones, two on laptops; plain clinical-software look. */
+:root{--bg:#eef0f3;--panel:#fff;--ink:#202124;--muted:#5f6368;--line:#c9ced6;--accent:#1f5fbf;--good:#1e7b34;--good-bg:#e4f3e7;--bad:#b3261e;--bad-bg:#fbe7e5;--warn:#9a6700;--scan:#0b0f14;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15181c;--panel:#1d2127;--ink:#e6e8eb;--muted:#9aa0a6;--line:#3a4048;--accent:#6ea0f0;--good:#6cc380;--good-bg:#173022;--bad:#f28b82;--bad-bg:#3a1c1a;--warn:#e3b341;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#15181c;--panel:#1d2127;--ink:#e6e8eb;--muted:#9aa0a6;--line:#3a4048;--accent:#6ea0f0;--good:#6cc380;--good-bg:#173022;--bad:#f28b82;--bad-bg:#3a1c1a;--warn:#e3b341;color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;overscroll-behavior:none}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));overscroll-behavior:none}
+.wrap{max-width:1000px;margin:0 auto}
+header{padding-block:14px 4px}
+h1{font-size:20px;margin:0;line-height:1.25}
+header p{margin:4px 0 0;color:var(--muted);font-size:14px}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px}
+h3{font-size:15px;margin:0 0 6px}
+.tabs{display:flex;gap:6px;padding-block:10px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:0 0 auto}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;margin-bottom:12px;min-width:0}
+.cols{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:780px){.cols{grid-template-columns:minmax(0,340px) minmax(0,1fr)}.cols.even{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+button{font:inherit;min-height:44px;padding:8px 14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button:hover{border-color:var(--accent)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button[aria-pressed="true"],button.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+button:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.row>button{flex:1 1 96px}
+label.opt{display:flex;gap:10px;margin-bottom:8px;align-items:flex-start;min-height:44px;cursor:pointer}
+label.opt input{width:22px;height:22px;margin-top:2px;flex:none}
+label.opt b{font-weight:600}
+small,.note{display:block;color:var(--muted);font-size:13px}
+input[type=range]{width:100%;height:32px}
+.runbar{position:sticky;bottom:0;padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(to top,var(--bg) 70%,transparent)}
+.runbar button{width:100%;min-height:50px;font-weight:600}
+.tiles{display:grid;gap:8px;grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:12px}
+@media(min-width:640px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.tile{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:10px;min-width:0}
+.tile b{display:block;font-size:21px;line-height:1.2;font-variant-numeric:tabular-nums}.tile span{font-size:12.5px;color:var(--muted)}
+.g{color:var(--good);font-weight:600}.b{color:var(--bad);font-weight:600}.w{color:var(--warn);font-weight:600}
+svg.chart{width:100%;height:auto;display:block}
+.chartbox{min-width:0}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:4px}
+.sw{display:inline-block;width:18px;height:0;border-top:3px solid var(--accent);vertical-align:middle;margin-right:4px}.sw.d{border-top:3px dashed var(--muted)}
+.log{max-height:240px;overflow-y:auto;font-size:14px}.log div{padding:6px 0;border-bottom:1px solid var(--line)}
+.log .ref{color:var(--muted);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:12px;color:var(--muted)}
+.scroll{overflow-x:auto}ul{padding-left:18px;margin:0}li{margin-bottom:6px}
+.verdict{border-left:4px solid var(--accent);padding:8px 12px;background:var(--bg);margin:10px 0}
+a{color:var(--accent);word-break:break-word}
+[hidden]{display:none!important}
+.ck{display:flex;gap:8px;margin-bottom:6px}.ck .tag{flex:none;min-width:44px}
+/* ---- Doctor's desk ---- */
+.dstat{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px;margin-bottom:6px}
+.dstat span{min-width:0}
+.dots{letter-spacing:3px;color:var(--accent)}
+.timer{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:10px}
+.timer div{height:100%;width:100%;background:var(--accent);transform-origin:left center;transform:scaleX(1);will-change:transform}
+.timer.low div{background:var(--bad)}
+.stage{position:relative;height:clamp(360px,56vh,540px);height:clamp(360px,56dvh,540px);max-width:420px;margin:0 auto}
+.card{position:absolute;inset:0;background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;gap:8px;padding:10px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:grab;will-change:transform;box-shadow:0 2px 10px rgba(0,0,0,.12);transition:transform .22s ease-out,opacity .22s}
+.card.drag{transition:none;cursor:grabbing}
+.card.enter{animation:enter .2s ease-out}
+@keyframes enter{from{opacity:0;transform:translate3d(0,14px,0) scale(.97)}to{opacity:1;transform:none}}
+.card.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translate3d(-8px,0,0)}75%{transform:translate3d(8px,0,0)}}
+.scan{flex:1;min-height:0;background:var(--scan);border-radius:6px;overflow:hidden;display:flex}
+.scan svg{width:100%;height:100%;display:block;pointer-events:none}
+.meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:14px;pointer-events:none}
+.flag{font-size:12.5px;color:var(--warn);font-weight:600}
+.notes{margin:0;font-size:14px;pointer-events:none}
+.aibox{padding:8px 10px;border-left:4px solid var(--accent);background:var(--bg);font-weight:600;font-size:14px;pointer-events:none}
+.aibox.hid{color:var(--muted);font-weight:400;border-left-color:var(--line)}
+.stamp{position:absolute;top:14px;padding:4px 10px;border:3px solid;border-radius:6px;font-weight:800;font-size:18px;letter-spacing:.04em;opacity:0;pointer-events:none;background:var(--panel);z-index:2}
+.s-l{left:12px;color:var(--good);border-color:var(--good);transform:rotate(-8deg)}
+.s-r{right:12px;color:var(--bad);border-color:var(--bad);transform:rotate(8deg)}
+.s-u{left:50%;top:44px;margin-left:-70px;color:var(--accent);border-color:var(--accent);font-size:14px}
+.toast{position:absolute;left:8px;right:8px;bottom:8px;z-index:3;padding:10px 12px;border-radius:6px;font-weight:600;text-align:center;pointer-events:none}
+.toast.ok{background:var(--good-bg);color:var(--good)}.toast.no{background:var(--bad-bg);color:var(--bad)}.toast.info{background:var(--bg);border:1px solid var(--line)}
+.dctl{display:grid;gap:8px;grid-template-columns:repeat(3,minmax(0,1fr));max-width:420px;margin:12px auto 0}
+.dctl.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.dctl button{min-height:54px;font-weight:600;padding:6px}
+.dctl .n{color:var(--good)}.dctl .a{color:var(--bad)}
+.barrow{display:grid;grid-template-columns:minmax(0,120px) minmax(0,1fr) 44px;gap:8px;align-items:center;margin:6px 0;font-size:13px}
+.barrow .t{height:12px;background:var(--line);border-radius:3px;overflow:hidden}.barrow .t i{display:block;height:100%;background:var(--accent)}
+.barrow.ref .t i{background:var(--muted)}
+@media(prefers-reduced-motion:reduce){.card,.card.enter,.card.shake{animation:none;transition:none}}
+.toast.mid{bottom:auto;top:42%}
+html{overflow-x:clip}
+
+</style>
 </head><body>
-<header><div><h1>FutureCare Hospital: AI Simulator</h1>
-<p>Two ways to test our analysis: run the hospital for a year, or sit at the doctor’s desk. A model for discussion, not real hospital data.</p></div></header>
-<nav class="tabs" id="tabs"><button data-t="dir" aria-pressed="true">Run the hospital</button><button data-t="doc" aria-pressed="false">Doctor’s desk</button><button data-t="src" aria-pressed="false">Assumptions and sources</button></nav>
+<div class="wrap">
+<header><h1>FutureCare AI Simulator</h1>
+<p>Companion to our presentation. It tests the same risks and the same five conditions, using the evidence from our six sources. It does not replace the analysis in the slides.</p></header>
+<nav class="tabs" id="tabs" aria-label="Pages"><button data-t="dir" aria-pressed="true">Run the hospital</button><button data-t="doc" aria-pressed="false">Doctor’s desk</button><button data-t="deck" aria-pressed="false">Link to the deck</button></nav>
 <main>
-<section id="dir">
- <div id="setup" class="cols">
+<section id="sec-dir">
+ <div class="cols">
   <div class="panel"><h2>Presets</h2>
-   <div class="row"><button data-p="none">No AI</button><button data-p="rush">Rush it</button><button data-p="ours">Our plan</button></div>
+   <div class="row"><button data-p="none">No AI</button><button data-p="outright">Adopt outright</button><button data-p="plan">Our plan</button></div>
    <h2>How is the AI used?</h2>
-   <div class="row" id="mode"><button data-v="0">No AI</button><button data-v="1">Advisory</button><button data-v="2">Auto-approve</button></div>
+   <div class="row" id="mode"><button data-v="0">No AI</button><button data-v="1">AI advises</button><button data-v="2">AI decides</button></div>
    <p class="note" id="modenote"></p>
-   <h2>Patients per month: <span id="volv"></span></h2>
-   <input type="range" id="vol" min="2000" max="9000" step="500" aria-label="Patients per month"></div>
-  <div class="panel"><h2>Conditions (your safeguards)</h2>
-   <label class="opt"><input type="checkbox" id="signoff"><span>Doctor signs every case<small>Overrides never penalised. Adds doctor time.</small></span></label>
-   <label class="opt"><input type="checkbox" id="audit"><span>Local validation and bias audit<small>Test on our own patients by sex, age, ethnicity</small></span></label>
-   <label class="opt"><input type="checkbox" id="safe"><span>Data safeguards<small>Encryption, local storage, vendor contract</small></span></label>
-   <label class="opt"><input type="checkbox" id="train"><span>Training and liability policy<small>Before launch</small></span></label>
-   <label class="opt"><input type="checkbox" id="phase"><span>Phased rollout and budget cap<small>Pilot first, slower benefits</small></span></label>
-   <button class="pri" id="start" style="width:100%">Start the year</button>
-   <button id="cmp" style="width:100%;margin-top:8px">Quick compare of the three presets</button></div>
+   <h2 style="margin-top:12px">Patients per month: <span id="volv"></span></h2>
+   <input type="range" id="vol" min="2000" max="9000" step="500" aria-label="Patients per month">
+   <p class="note">More patients means busier hours, which raises blind trust when no condition controls it (slide 6).</p></div>
+  <div class="panel"><h2>Our five conditions (slide 11)</h2><div id="conds"></div></div>
  </div>
- <div id="cmpbox"></div>
- <div id="play" hidden>
+ <div class="runbar"><button class="pri" id="run">Run the year</button></div>
+ <div id="res" hidden>
   <div class="tiles" id="tiles"></div>
-  <div class="cols even"><div class="panel"><h2>Risk gauges</h2><div id="gauges"></div></div>
-  <div class="panel"><h2>Hospital log</h2><div class="log" id="log"></div></div></div>
-  <div id="evbox"></div>
-  <div class="row"><button class="pri" id="next">Next month</button><button id="restart">Restart</button></div>
+  <div class="cols even">
+   <div class="panel chartbox"><h2>Errors reaching patients (cumulative)</h2><div id="ch1"></div><div class="legend"><span><i class="sw"></i>This scenario</span><span><i class="sw d"></i>No AI</span></div></div>
+   <div class="panel chartbox"><h2>Doctor readings per month</h2><div id="ch2"></div><div class="legend"><span><i class="sw"></i>This scenario</span><span><i class="sw d"></i>No AI</span></div></div>
+  </div>
+  <div class="panel"><h2>What happened this year</h2><div class="log" id="log"></div></div>
+  <div id="final" hidden></div>
  </div>
- <div id="end" hidden></div>
 </section>
-<section id="doc" hidden>
- <div class="panel"><h2>You are the radiologist</h2>
-  <p>Ten patients. The AI gives a recommendation with a confidence score. The clinical notes are what you would know as the doctor. Accept the AI, overrule it, or order a second opinion (3 available, each costs time).</p>
-  <button class="pri" id="dstart">Start the shift</button></div>
- <div id="dplay"></div>
+
+<section id="sec-doc" hidden>
+ <div id="d-start" class="panel">
+  <h2>You are the radiologist</h2>
+  <p>Twelve patients, one shift. The AI gives a recommendation, the doctor has the final say. Read each scan and the notes, then <b>swipe the card</b>:</p>
+  <ul><li><b>Right</b> for ABNORMAL, <b>left</b> for NORMAL</li><li><b>Up</b> for a second opinion (3 per shift, each adds delay)</li><li>Mouse users can drag the card. Buttons and arrow keys work too.</li></ul>
+  <h2 style="margin-top:14px">Workflow (our conditions)</h2>
+  <label class="opt"><input type="checkbox" id="o-first"><span><b>Doctor reads first</b><small>Your read comes before the AI is shown. Disagreements are logged (condition 3).</small></span></label>
+  <label class="opt"><input type="checkbox" id="o-conf" checked><span><b>Show AI confidence</b><small>A confidence score appears with the suggestion (condition 3).</small></span></label>
+  <label class="opt"><input type="checkbox" id="o-audit"><span><b>Flag groups the AI is weaker on</b><small>Local subgroup audit warning (condition 2).</small></span></label>
+  <label class="opt"><input type="checkbox" id="o-busy"><span><b>Busy hours</b><small>Half the time per patient. If time runs out the AI’s answer is used (slide 6).</small></span></label>
+  <button class="pri" id="d-go" style="width:100%;margin-top:8px">Start the shift</button>
+ </div>
+ <div id="d-play" hidden>
+  <div class="dstat"><span id="d-pos"></span><span id="d-queue"></span><span id="d-sec" class="dots" aria-label="Second opinions left"></span></div>
+  <div class="timer" id="d-timer"><div id="d-bar"></div></div>
+  <div class="stage" id="d-stage"></div>
+  <div class="dctl" id="d-ctl"></div>
+  <p class="note" id="d-hint" style="text-align:center;margin-top:8px"></p>
+  <div class="note" id="d-live" role="status" aria-live="polite" style="position:absolute;left:-9999px"></div>
+ </div>
+ <div id="d-end" hidden></div>
 </section>
-<section id="src" hidden>
- <div class="panel"><h2>Model assumptions</h2><ul>
-  <li>AI-supported reading cuts workload by about 44% at full adoption and finds about 29% more cancers without more false positives (Hernström et al., 2025).</li>
-  <li>Without local validation only about half the benefit is assumed and false alarms rise from 6% to 18% of scans (Wong et al., 2021).</li>
-  <li>If the AI is wrong and the doctor stops checking, the error reaches the patient; over-reliance grows monthly unless sign-off and training slow it (Goddard et al., 2012).</li>
-  <li>Without a bias audit the AI misses about 35% more findings in under-represented patients, versus about 8% with one (Seyyed-Kalantari et al., 2021). In the doctor’s desk, patients aged 70+ stand in for the under-represented group.</li>
-  <li>A healthcare data breach costs $9.77M on average; safeguards cut the chance by 70% and the damage by 40% (IBM Security, 2024).</li>
-  <li>Legal exposure rises with AI-influenced errors; a liability policy lowers it (Price et al., 2019).</li>
-  <li>Conditions have costs: sign-off adds time, phasing delays benefits, safeguards and training add spending. Costs and event timing are our own illustrative assumptions.</li></ul></div>
- <div class="panel"><h2>Sources</h2><ul>
-  <li>Adams, R., et al. (2022). Prospective, multi-site study of patient outcomes after implementation of the TREWS machine learning-based early warning system for sepsis. <i>Nature Medicine, 28</i>(7), 1455–1460. <a href="https://doi.org/10.1038/s41591-022-01894-0" target="_blank" rel="noopener">https://doi.org/10.1038/s41591-022-01894-0</a></li>
-  <li>Goddard, K., Roudsari, A., &amp; Wyatt, J. C. (2012). Automation bias: A systematic review of frequency, effect mediators, and mitigators. <i>Journal of the American Medical Informatics Association, 19</i>(1), 121–127. <a href="https://doi.org/10.1136/amiajnl-2011-000089" target="_blank" rel="noopener">https://doi.org/10.1136/amiajnl-2011-000089</a></li>
-  <li>Hernström, V., et al. (2025). Screening performance and characteristics of breast cancer detected in the Mammography Screening with Artificial Intelligence trial (MASAI). <i>The Lancet Digital Health, 7</i>(3), e175–e183. <a href="https://doi.org/10.1016/S2589-7500(24)00267-X" target="_blank" rel="noopener">https://doi.org/10.1016/S2589-7500(24)00267-X</a></li>
-  <li>IBM Security. (2024). <i>Cost of a data breach report 2024</i>. IBM. <a href="https://www.ibm.com/reports/data-breach" target="_blank" rel="noopener">https://www.ibm.com/reports/data-breach</a></li>
-  <li>Obermeyer, Z., Powers, B., Vogeli, C., &amp; Mullainathan, S. (2019). Dissecting racial bias in an algorithm used to manage the health of populations. <i>Science, 366</i>(6464), 447–453. <a href="https://doi.org/10.1126/science.aax2342" target="_blank" rel="noopener">https://doi.org/10.1126/science.aax2342</a></li>
-  <li>Price, W. N., Gerke, S., &amp; Cohen, I. G. (2019). Potential liability for physicians using artificial intelligence. <i>JAMA, 322</i>(18), 1765–1766. <a href="https://doi.org/10.1001/jama.2019.15064" target="_blank" rel="noopener">https://doi.org/10.1001/jama.2019.15064</a></li>
-  <li>Seyyed-Kalantari, L., et al. (2021). Underdiagnosis bias of artificial intelligence algorithms applied to chest radiographs in under-served patient populations. <i>Nature Medicine, 27</i>(12), 2176–2182. <a href="https://doi.org/10.1038/s41591-021-01595-0" target="_blank" rel="noopener">https://doi.org/10.1038/s41591-021-01595-0</a></li>
-  <li>Wong, A., et al. (2021). External validation of a widely implemented proprietary sepsis prediction model in hospitalized patients. <i>JAMA Internal Medicine, 181</i>(8), 1065–1070. <a href="https://doi.org/10.1001/jamainternmed.2021.2626" target="_blank" rel="noopener">https://doi.org/10.1001/jamainternmed.2021.2626</a></li>
-  <li>World Health Organization. (2021). <i>Ethics and governance of artificial intelligence for health: WHO guidance</i>. <a href="https://www.who.int/publications/i/item/9789240029200" target="_blank" rel="noopener">https://www.who.int/publications/i/item/9789240029200</a></li></ul></div>
+
+<section id="sec-deck" hidden>
+ <div class="panel"><h2>How this supports the presentation</h2>
+  <p>Nothing here changes the analysis, the numbers or the recommendation in the slides. The simulator lets the audience test the same arguments.</p>
+  <div class="scroll"><table><tr><th>In the simulator</th><th>In the deck</th></tr>
+  <tr><td>Doctor reading workload falls 44.3% at full adoption</td><td>Benefit 1, trade-off (slides 3, 10). Lång et al. (2023)</td></tr>
+  <tr><td>Early cancer caught during the year</td><td>Benefits 2 and 3 (slides 4, 5). Mikhael et al. (2023), Lång et al. (2023)</td></tr>
+  <tr><td>Wrong AI suggestions followed by doctors, worse in busy hours</td><td>Risk 1, Blind Trust (slide 6). Dratsch et al. (2023): experienced readers fell from 82% to 45.5% accuracy on wrong suggestions, novices below 20%</td></tr>
+  <tr><td>AI less accurate for under-represented groups, gap returns at a new site</td><td>Risk 2 (slide 7). Yang et al. (2024)</td></tr>
+  <tr><td>Claim after an AI-influenced error; who pays</td><td>Risk 3, Liability (slide 8). Mello &amp; Guha (2024)</td></tr>
+  <tr><td>Data breach and cost</td><td>Management row of slide 9. WHO (2024) for governance</td></tr>
+  <tr><td>Five switches and their effects</td><td>Five conditions (slide 11), same wording and order</td></tr>
+  <tr><td>Presets: No AI, Adopt outright, Our plan</td><td>Slide 12: why not refuse, why not adopt outright, implement under conditions</td></tr>
+  <tr><td>Year-end scorecard: subgroup gap, wrong suggestions caught, security</td><td>Slide 12: decide based on results by subgroup, how often doctors override the AI, and a security audit passed</td></tr></table></div></div>
+ <div class="panel"><h2>What is evidence and what is assumed</h2>
+  <p><b>From the sources:</b> 44.3% workload cut with similar detection (Lång et al., 2023); 82% to 45.5% and below 20% (Dratsch et al., 2023). The simulator uses the cited figures, not the 44.7% that appears on slides 3 and 10.</p>
+  <p><b>Illustrative assumptions (not findings):</b> a 5% baseline miss rate, a 4% AI error rate, the AI being less accurate for one patient group (94% against 78% in the doctor’s desk), blind trust rising over time without condition 3, busy hours raising it, the size of each condition’s effect, event timing, and all costs. Costs are relative units, not dollars.</p></div>
+ <div class="panel"><h2>Sources (same as the deck)</h2><ul>
+  <li>Dratsch, T., Chen, X., Hosein, M., Kloeckner, R., Mähringer-Kunz, A., Püsken, M., Baeßler, B., Stephanie Tina Sauer, Maintz, D., &amp; Pinto, D. (2023). Automation bias in mammography: The impact of artificial intelligence BI-RADS suggestions on reader performance. <i>Radiology, 307</i>(4). <a href="https://doi.org/10.1148/radiol.222176" target="_blank" rel="noopener">https://doi.org/10.1148/radiol.222176</a></li>
+  <li>Lång, K., Josefsson, V., Larsson, A.-M., Larsson, S., Högberg, C., Sartor, H., Hofvind, S., Andersson, I., &amp; Rosso, A. (2023). Artificial intelligence-supported screen reading versus standard double reading in the Mammography Screening with Artificial Intelligence trial (MASAI): A clinical safety analysis of a randomised, controlled, non-inferiority, single-blinded, screening accuracy study. <i>The Lancet Oncology, 24</i>(8), 936–944. <a href="https://doi.org/10.1016/S1470-2045(23)00298-X" target="_blank" rel="noopener">https://doi.org/10.1016/S1470-2045(23)00298-X</a></li>
+  <li>Mello, M. M., &amp; Guha, N. (2024). Understanding liability risk from using health care artificial intelligence tools. <i>New England Journal of Medicine, 390</i>(3), 271–278. <a href="https://doi.org/10.1056/NEJMhle2308901" target="_blank" rel="noopener">https://doi.org/10.1056/NEJMhle2308901</a></li>
+  <li>Mikhael, P. G., Wohlwend, J., Yala, A., Karstens, L., Xiang, J., Takigami, A. K., Bourgouin, P. P., Chan, P., Mrah, S., Amayri, W., Juan, Y.-H., Yang, C.-T., Wan, Y.-L., Lin, G., Sequist, L. V., Fintelmann, F. J., &amp; Barzilay, R. (2023). Sybil: A validated deep learning model to predict future lung cancer risk from a single low-dose chest computed tomography. <i>Journal of Clinical Oncology, 41</i>(12). <a href="https://doi.org/10.1200/jco.22.01345" target="_blank" rel="noopener">https://doi.org/10.1200/jco.22.01345</a></li>
+  <li>World Health Organization. (2024). <i>Ethics and governance of artificial intelligence for health: Guidance on large multi-modal models</i>. <a href="https://www.who.int/publications/i/item/9789240084759" target="_blank" rel="noopener">https://www.who.int/publications/i/item/9789240084759</a></li>
+  <li>Yang, Y., Zhang, H., Gichoya, J. W., Katabi, D., &amp; Ghassemi, M. (2024). The limits of fair medical imaging AI in real-world generalization. <i>Nature Medicine, 30</i>, 2838–2848. <a href="https://doi.org/10.1038/s41591-024-03113-4" target="_blank" rel="noopener">https://doi.org/10.1038/s41591-024-03113-4</a></li></ul></div>
 </section>
 </main>
-<script src="app.js"></script>
+</div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),f1=x=>x.toFixed(1),f0=x=>Math.round(x);
+const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+/* ================= tabs ================= */
+const SECS={dir:'sec-dir',doc:'sec-doc',deck:'sec-deck'};let tab='dir';
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;document.querySelectorAll('#tabs button').forEach(x=>x.setAttribute('aria-pressed',x===b));for(const k in SECS)$(SECS[k]).hidden=k!==tab;window.scrollTo(0,0);if(tab!=='doc')pauseTimer();else resumeTimer()});
+
+/* ================= Page 1: run the hospital ================= */
+const COND=[
+ {k:'c1',t:'Pilot one department first',d:'Controls all risks'},
+ {k:'c2',t:'Test locally by subgroup; audit regularly',d:'Controls unequal performance'},
+ {k:'c3',t:'Doctor reads first; log disagreements; train; show confidence',d:'Controls automation bias'},
+ {k:'c4',t:'Written liability policy + vendor terms',d:'Controls unclear liability'},
+ {k:'c5',t:'Fund security, access limits + breach plan',d:'Controls data breach + cost'}];
+const PRE={none:{mode:0,c1:0,c2:0,c3:0,c4:0,c5:0},outright:{mode:1,c1:0,c2:0,c3:0,c4:0,c5:0},plan:{mode:1,c1:1,c2:1,c3:1,c4:1,c5:1}};
+const S=Object.assign({vol:5000},PRE.plan);let seed=7,ran=false,tok=0,timer=0;
+const MN=['Doctors read everything as today.','AI gives a recommendation; the doctor has the final say (our proposal).','Stress test: the AI decides alone, no doctor check. Not what we propose.'];
+$('conds').innerHTML=COND.map((c,i)=>'<label class="opt"><input type="checkbox" id="cond-'+c.k+'"><span><b>'+(i+1)+'. '+esc(c.t)+'</b><small>'+esc(c.d)+'</small></span></label>').join('');
+function ui(){document.querySelectorAll('#mode button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.v===S.mode));COND.forEach(c=>$('cond-'+c.k).checked=!!S[c.k]);$('vol').value=S.vol;$('volv').textContent=S.vol.toLocaleString();$('modenote').textContent=MN[S.mode]}
+function changed(){ui();if(ran)play(false)}
+document.querySelectorAll('#mode button').forEach(b=>b.onclick=()=>{S.mode=+b.dataset.v;changed()});
+COND.forEach(c=>$('cond-'+c.k).onchange=()=>{S[c.k]=$('cond-'+c.k).checked?1:0;changed()});
+$('vol').oninput=()=>{S.vol=+$('vol').value;changed()};
+document.querySelectorAll('button[data-p]').forEach(b=>b.onclick=()=>{Object.assign(S,PRE[b.dataset.p]);changed()});
+
+function runYear(c,sd){
+ const r=rng(sd),ai=c.mode>0,load=c.vol/5000,abn=c.vol*0.10,BASE=0.05,AIW=0.04,GAP=c.c2?0.08:0.35;
+ const pool=[0,1,2,3,4].map(v=>[r(),v]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]).slice(0,3),slots=[[2,4],[5,8],[9,12]],ev={};
+ pool.forEach((e,i)=>{const a=slots[i][0],b=slots[i][1];ev[a+Math.floor(r()*(b-a+1))]=e});
+ const o={err:[0],base:[0],read:[],wait:[],follow:[],events:[],breaches:0,early:0};
+ let cost=ai?3*(c.c1?0.6:1)+(c.c3?0.3:0)+(c.c5?0.6:0)+(c.c2?0.3:0)+(c.c4?0.1:0):0,legal=0,extraLeft=0,surgeLeft=0,surgeAdd=0,cumE=0,cumB=0,fs=0,cs=0,ws=0,bws=0;
+ for(let m=1;m<=12;m++){
+  const rb=r(),ramp=!ai?0:c.c1?(m<=3?.35:m<=6?.7:1):Math.min(1,m/2);
+  const e=ev[m];
+  if(ai&&e!==undefined){
+   if(e===0){if(c.c2)o.events.push({m,g:1,t:'Local subgroup testing spots lower accuracy in a new patient group. The model is adjusted before harm.',ref:'Risk 2 · condition 2'});else{extraLeft=3;o.events.push({m,g:0,t:'The AI quietly misses more findings in a new patient group. Nobody is testing by subgroup.',ref:'Risk 2'})}}
+   if(e===1){surgeLeft=2;if(c.c3){surgeAdd=.05;o.events.push({m,g:1,t:'Busy week. Doctors read first and log disagreements, so blind trust barely moves.',ref:'Risk 1 · condition 3'})}else{surgeAdd=.2;o.events.push({m,g:0,t:'Busy week. Overwhelmed doctors start following the AI without checking.',ref:'Risk 1'})}}
+   if(e===2){const k=c.c4?.8:2;cost+=k;o.events.push({m,g:c.c4?1:0,t:c.c4?'A claim follows an AI-influenced error. The liability policy and vendor terms share the cost ('+k.toFixed(1)+' units).':'A claim follows an AI-influenced error. Nobody agreed who pays, so the hospital carries it ('+k.toFixed(1)+' units).',ref:'Risk 3'+(c.c4?' · condition 4':'')})}
+   if(e===3){if(c.c5){cost+=.3;o.events.push({m,g:1,t:'A security incident is contained by access limits and the breach plan (0.3 units).',ref:'Data exposure · condition 5'})}else{cost+=4;o.breaches++;o.events.push({m,g:0,t:'Patient data is exposed in a breach (4.0 units).',ref:'Data exposure'})}}
+   if(e===4){o.early++;o.events.push({m,g:1,t:'AI-supported review flags an early cancer that was borderline on the first read.',ref:'Benefits 2 and 3'})}
+  }
+  if(ai&&rb<.006*(c.c5?.3:1)){const k=c.c5?1.2:4;cost+=k;o.breaches++;o.events.push({m,g:0,t:'A data breach occurs'+(c.c5?', limited by access controls':'')+' ('+k.toFixed(1)+' units).',ref:'Data exposure'})}
+  const cut=ai?(c.mode===1?.443:.55)*ramp*(c.c3?.92:1):0;
+  const f=c.mode===2?1:c.mode===1?Math.min(.95,(c.c3?.25:.545)+(c.c3?0:Math.min(.2,.02*m))+.12*Math.max(0,load-1)*(c.c3?.5:1)+(surgeLeft>0?surgeAdd:0)):0;
+  const gapNow=1+GAP*ramp,aiw=AIW*(.7+.3*gapNow);
+  let er=!ai?BASE:c.mode===1?BASE*(1-.25*ramp)+aiw*f*ramp:(1-ramp)*BASE+ramp*(aiw+.03);
+  let cnt=abn*er+(extraLeft>0?abn*.012:0);
+  const harm=!ai?0:c.mode===1?abn*aiw*f*ramp:abn*aiw*ramp;
+  legal+=harm*.01*(c.c4?.5:1);if(ai)cost+=.1;
+  if(extraLeft>0)extraLeft--;if(surgeLeft>0)surgeLeft--;
+  cumE+=cnt;cumB+=abn*BASE;fs+=f;cs+=cut;ws+=20*load*load*(1-cut);bws+=20*load*load;
+  o.err.push(cumE);o.base.push(cumB);o.read.push(c.vol*2*(1-cut));o.wait.push(20*load*load*(1-cut));o.follow.push(f);
+ }
+ o.errTotal=cumE;o.baseTotal=cumB;o.cut=cs/12;o.wait12=ws/12;o.bwait=bws/12;o.follow12=fs/12;o.gap=ai?GAP:0;o.legal=legal;o.cost=cost+legal;o.ai=ai;o.mode=c.mode;o.baseRead=c.vol*2;
+ return o}
+
+/* charts (drawn at the container's real width so text stays readable on phones) */
+const CH={};
+function drawChart(id){const cfg=CH[id];if(!cfg)return;const el=$(id),W=Math.max(260,Math.floor(el.clientWidth||320)),H=W<480?190:230,L=44,R=12,T=12,B=26;
+ const X=i=>L+i*(W-L-R)/12,Y=v=>H-B-v/cfg.ymax*(H-B-T),pts=(a,n)=>a.slice(0,n+1).map((v,i)=>X(i)+','+Y(v)).join(' ');
+ let g='';for(const t of [0,.5,1]){const v=cfg.ymax*t;g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--line)"/><text x="'+(L-6)+'" y="'+(Y(v)+4)+'" font-size="11" fill="var(--muted)" text-anchor="end">'+f0(v).toLocaleString()+'</text>'}
+ for(const t of [0,3,6,9,12])g+='<text x="'+X(t)+'" y="'+(H-8)+'" font-size="11" fill="var(--muted)" text-anchor="middle">'+t+'</text>';
+ g+='<polyline fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 5" points="'+pts(cfg.base,12)+'"/>';
+ g+='<polyline fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" points="'+pts(cfg.val,cfg.n)+'"/>';
+ (cfg.events||[]).forEach(e=>{if(e.m<=cfg.n)g+='<circle cx="'+X(e.m)+'" cy="'+Y(cfg.val[e.m])+'" r="5" fill="'+(e.g?'var(--good)':'var(--bad)')+'" stroke="var(--panel)" stroke-width="2"/>'});
+ el.innerHTML='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(cfg.label)+'">'+g+'</svg>'}
+function setChart(id,cfg){CH[id]=cfg;drawChart(id)}
+if(window.ResizeObserver){const ro=new ResizeObserver(()=>{for(const id in CH)drawChart(id)});['ch1','ch2'].forEach(id=>ro.observe($(id)))}else window.addEventListener('resize',()=>{for(const id in CH)drawChart(id)});
+
+function view(R,n){
+ const read=[R.baseRead].concat(R.read),shown=Math.max(n,1),avgCut=R.read.slice(0,n).reduce((a,v)=>a+(1-v/R.baseRead),0)/shown;
+ $('tiles').innerHTML=[['Month',n+' of 12',''],['Reading workload cut',R.ai?f0(avgCut*100)+'%':'0%','average so far'],['Errors reaching patients',f0(R.err[n]),'no AI: '+f0(R.base[n])],['Cost so far',(R.cost*(n/12)).toFixed(1)+' units','relative, not dollars']].map(t=>'<div class="tile"><b>'+t[1]+'</b><span>'+t[0]+(t[2]?' ('+t[2]+')':'')+'</span></div>').join('');
+ setChart('ch1',{n,base:R.base,val:R.err,ymax:Math.max(R.base[12],R.err[12],1)*1.1,events:R.events,label:'Cumulative errors reaching patients by month'});
+ setChart('ch2',{n,base:read.map(()=>R.baseRead),val:read,ymax:R.baseRead*1.1,events:[],label:'Doctor readings per month'});
+ const ev=R.events.filter(e=>e.m<=n).sort((a,b)=>a.m-b.m);
+ $('log').innerHTML=R.ai?(ev.length?ev.map(e=>'<div><b>Month '+e.m+':</b> <span class="'+(e.g?'g':'b')+'">'+esc(e.t)+'</span> <span class="ref">'+esc(e.ref)+'</span></div>').join(''):'<div class="note">'+(n?'Nothing notable yet.':'The year is about to start.')+'</div>'):'<div class="note">No AI, so nothing new can go wrong and nothing new is gained.</div>'}
+function finish(R){
+ const ck=[
+  ['Doctor reading workload cut at least 25%',!R.ai||R.cut>=.25,f0(R.cut*100)+'%','',R.ai],
+  ['Errors reaching patients no higher than without AI',R.errTotal<=R.baseTotal,f0(R.errTotal)+' vs '+f0(R.baseTotal),'3',R.ai],
+  ['Gap for under-represented patients under 15%',R.gap<=.15,f0(R.gap*100)+'%','2',R.ai],
+  ['Wrong AI suggestions caught by doctors at least 60%',R.mode!==1||1-R.follow12>=.6,R.mode===2?'0%':f0((1-R.follow12)*100)+'%','3',R.ai],
+  ['Legal exposure under 1 unit',R.legal<=1,R.legal.toFixed(2)+' units','4',R.ai],
+  ['No data breach (security)',R.breaches===0,R.breaches+' incident(s)','5',R.ai],
+  ['Total cost within 6 units',R.cost<=6,R.cost.toFixed(1)+' units','1 and 5',R.ai]];
+ const fails=ck.filter(c=>!c[1]);let v;
+ if(!R.ai)v='With no AI there is no new risk, but waiting stays at '+f1(R.bwait)+' hours and doctors keep the full reading load. This is the cost of refusing (slide 12).';
+ else if(!fails.length)v='Every check passed: workload down '+f0(R.cut*100)+'%, errors '+f0(R.errTotal)+' against '+f0(R.baseTotal)+' without AI. This is the case for implementing under conditions (slide 12).';
+ else v=fails.length+' check(s) failed. '+(R.mode===2?'With no doctor check the AI’s own mistakes reach patients. ':'')+'Conditions that address them: '+Array.from(new Set(fails.map(c=>c[3]).filter(Boolean))).join(', ')+' (slide 11).';
+ const rows=[['No AI',PRE.none],['Adopt outright',PRE.outright],['Our plan',PRE.plan]].map(p=>{const x=runYear(Object.assign({vol:S.vol},p[1]),seed);return '<tr><td>'+p[0]+'</td><td>'+f0(x.cut*100)+'%</td><td>'+f0(x.errTotal)+'</td><td>'+f0(x.gap*100)+'%</td><td>'+x.cost.toFixed(1)+'</td></tr>'}).join('');
+ $('final').hidden=false;$('final').innerHTML='<div class="panel"><h2>Year-end scorecard</h2>'+(R.ai?ck:[]).map(c=>'<div class="ck"><span class="tag '+(c[1]?'g':'b')+'">'+(c[1]?'Pass':'Fail')+'</span><span>'+esc(c[0])+' <span class="note" style="display:inline">('+c[2]+')</span></span></div>').join('')+'<div class="verdict">'+esc(v)+'</div>'+
+  '<div class="row"><button id="reroll">New random events</button></div></div>'+
+  '<div class="panel"><h2>Same year, same random events, three strategies</h2><div class="scroll"><table><tr><th>Strategy</th><th>Workload cut</th><th>Errors</th><th>Subgroup gap</th><th>Cost</th></tr>'+rows+'</table></div><p class="note">Slide 12: why not refuse, why not adopt outright, implement under conditions.</p></div>';
+ $('reroll').onclick=()=>{seed=Math.floor(Math.random()*9999)+1;play(true)}}
+function play(animate){const R=runYear(S,seed),my=++tok;clearTimeout(timer);$('res').hidden=false;$('final').hidden=true;
+ if(!animate||reduce){view(R,12);finish(R);return}
+ let n=0;view(R,0);(function tick(){if(my!==tok)return;n++;view(R,n);if(n<12)timer=setTimeout(tick,300);else finish(R)})()}
+$('run').onclick=()=>{const first=!ran;ran=true;play(true);if(first)$('res').scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'})};
+
+/* ================= Page 2: doctor's desk ================= */
+const NOTES_A=['Cough for three weeks, long-term smoker.','Unexplained weight loss and night sweats.','Persistent chest pain, family history of lung disease.','Breathlessness getting worse over a month.','Coughing blood-streaked sputum twice this week.'];
+const NOTES_N=['Routine check, no symptoms.','Mild cough after a cold, now resolved.','Pre-surgery screening, no complaints.','Sports injury follow-up, no chest symptoms.','Annual workplace health check.'];
+const N=12,HIST={};let D=null,tm={active:false,elapsed:0,limit:14000,last:0,raf:0};
+function genCases(sd){const r=rng(sd),cs=[];
+ for(let i=0;i<N;i++){const under=r()<.33,truth=r()<.42,aiOk=r()<(under?.78:.94),left=r()<.5,noteOk=r()<.8,sex=r()<.5?'Female':'Male';
+  cs.push({i,under,truth,ai:aiOk?truth:!truth,sex,age:28+Math.floor(r()*50),lx:left?42+r()*42:116+r()*42,ly:34+r()*68,lr:4+r()*4,con:.55+r()*.4,dx:left?116+r()*42:42+r()*42,dy:34+r()*68,decoy:!truth&&r()<.3,note:((noteOk?truth:!truth)?NOTES_A:NOTES_N)[Math.floor(r()*5)]})}
+ const wr=()=>cs.filter(c=>c.ai!==c.truth),und=cs.filter(c=>c.under);
+ if(und.length&&!und.some(c=>c.ai!==c.truth))und[0].ai=!und[0].ai;
+ while(wr().length<3){const ok=cs.filter(c=>c.ai===c.truth);const c=ok[Math.floor(r()*ok.length)];c.ai=!c.ai}
+ while(wr().length>5){const w=wr(),lone=w.filter(c=>c.under).length===1,p=w.filter(c=>!(lone&&c.under));const c=p[Math.floor(r()*p.length)];c.ai=!c.ai}
+ cs.forEach(c=>{c.conf=c.ai===c.truth?88+Math.floor(r()*10):78+Math.floor(r()*16)});
+ return cs}
+function scanSVG(c){let ribs='';for(let k=0;k<6;k++){const y=24+k*18;ribs+='<path d="M100 '+y+' Q62 '+(y-12)+' 26 '+(y+6)+'" stroke="#8a95a3" stroke-width="2" fill="none" opacity=".22"/><path d="M100 '+y+' Q138 '+(y-12)+' 174 '+(y+6)+'" stroke="#8a95a3" stroke-width="2" fill="none" opacity=".22"/>'}
+ const les=c.truth?'<circle cx="'+c.lx+'" cy="'+c.ly+'" r="'+c.lr+'" fill="url(#ls)" opacity="'+c.con+'"/>':(c.decoy?'<circle cx="'+c.lx+'" cy="'+c.ly+'" r="3.5" fill="url(#ls)" opacity=".25"/>':'');
+ const ax=c.truth?c.lx:c.dx,ay=c.truth?c.ly:c.dy;
+ const box=c.ai?'<g id="aio" style="display:none"><rect x="'+(ax-13)+'" y="'+(ay-13)+'" width="26" height="26" rx="2" fill="none" stroke="#ff6b5e" stroke-width="1.6" stroke-dasharray="4 3"/><text x="'+(ax-13)+'" y="'+(ay-16)+'" font-size="8" fill="#ff6b5e">AI</text></g>':'';
+ return '<svg viewBox="0 0 200 150" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Schematic chest scan"><defs><radialGradient id="lg" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#4f5b6b"/><stop offset="1" stop-color="#232b36"/></radialGradient><radialGradient id="ls"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient></defs><rect width="200" height="150" fill="#0b0f14"/><path d="M100 6V144" stroke="#6b7684" stroke-width="5" opacity=".45"/>'+ribs+'<ellipse cx="68" cy="76" rx="34" ry="54" fill="url(#lg)"/><ellipse cx="132" cy="76" rx="34" ry="54" fill="url(#lg)"/><ellipse cx="94" cy="98" rx="20" ry="26" fill="#cfd6df" opacity=".3"/>'+les+box+'<text x="6" y="144" font-size="7" fill="#8a95a3">Schematic, not a real scan</text></svg>'}
+function cardHTML(c){const t=c.ai?'ABNORMAL':'NORMAL';
+ const ai=D.opts.first?'<div class="aibox hid" id="aib">AI suggestion hidden until you give your read</div>':'<div class="aibox" id="aib">AI suggests: '+t+(D.opts.conf?' · confidence '+c.conf+'%':'')+'</div>';
+ return '<div class="card enter" id="card"><div class="stamp s-l" id="st-l">NORMAL</div><div class="stamp s-r" id="st-r">ABNORMAL</div><div class="stamp s-u" id="st-u">SECOND OPINION</div><div class="scan">'+scanSVG(c)+'</div><div class="meta"><b>'+c.sex+', '+c.age+'</b>'+(D.opts.audit&&c.under?'<span class="flag">⚠ AI weaker for this patient group</span>':'')+'</div><p class="notes">'+esc(c.note)+'</p>'+ai+'</div>'}
+function showOverlay(){const o=$('aio');if(o)o.style.display=''}
+function revealVisual(){const c=D.cases[D.i];showOverlay();const b=$('aib');if(b){b.className='aibox';b.textContent='AI suggests: '+(c.ai?'ABNORMAL':'NORMAL')+(D.opts.conf?' · confidence '+c.conf+'%':'')}}
+function toast(msg,cls,mid){const t=$('toast');if(!t)return;t.hidden=false;t.className='toast '+cls+(mid?' mid':'');t.textContent=msg}
+function ctl(ph){const c=$('d-ctl'),cs=D&&D.cases[D.i];
+ if(ph==='read'){c.className='dctl';c.innerHTML='<button class="n" data-d="left">← Normal</button><button data-d="up">↑ Second opinion</button><button class="a" data-d="right">Abnormal →</button>'}
+ else if(ph==='choose'){c.className='dctl two';c.innerHTML='<button data-k="keep">Keep my read: '+(D.myRead?'ABNORMAL':'NORMAL')+'</button><button data-k="switch">Switch to AI: '+(cs.ai?'ABNORMAL':'NORMAL')+'</button>'}
+ else{c.className='dctl';c.innerHTML=''}}
+function dots(){$('d-sec').textContent='●'.repeat(D.second)+'○'.repeat(3-D.second)}
+/* timer */
+function timerStart(){tm.limit=D.opts.busy?7000:14000;tm.elapsed=0;tm.active=true;tm.last=0;$('d-timer').classList.remove('low');$('d-bar').style.transform='scaleX(1)';cancelAnimationFrame(tm.raf);tm.raf=requestAnimationFrame(tloop)}
+function tloop(now){if(!tm.active)return;if(!tm.last)tm.last=now;if(document.hidden||tab!=='doc'){tm.last=now;tm.raf=requestAnimationFrame(tloop);return}
+ tm.elapsed+=Math.min(now-tm.last,200);tm.last=now;const p=Math.min(1,tm.elapsed/tm.limit);$('d-bar').style.transform='scaleX('+(1-p)+')';$('d-timer').classList.toggle('low',p>.7);
+ if(p>=1){tm.active=false;if(D&&D.phase==='read'&&!D.busy)commit('right','timeout')}else tm.raf=requestAnimationFrame(tloop)}
+function stopTimer(){tm.active=false;cancelAnimationFrame(tm.raf)}
+function pauseTimer(){}function resumeTimer(){}
+/* shift flow */
+function readOpts(){return{first:$('o-first').checked,conf:$('o-conf').checked,audit:$('o-audit').checked,busy:$('o-busy').checked}}
+function startShift(sd,opts){D={seed:sd,opts,cases:genCases(sd),r:rng(sd+99),i:0,res:[],second:3,delay:0,phase:'read',busy:false,myRead:null,timedOut:false};$('d-start').hidden=true;$('d-end').hidden=true;$('d-play').hidden=false;window.scrollTo(0,0);renderCase()}
+function renderCase(){const c=D.cases[D.i];D.phase='read';D.busy=false;D.myRead=null;D.timedOut=false;
+ $('d-pos').textContent='Patient '+(D.i+1)+' of '+N;$('d-queue').textContent='Waiting: '+(N-D.i-1+D.delay);dots();
+ $('d-stage').innerHTML=cardHTML(c)+'<div class="toast" id="toast" hidden></div>';
+ if(!D.opts.first)showOverlay();ctl('read');
+ $('d-hint').textContent='Swipe right for ABNORMAL, left for NORMAL, up for a second opinion.'+(D.opts.first?' The AI stays hidden until you give your read.':'');
+ $('d-live').textContent='Patient '+(D.i+1)+' of '+N;timerStart()}
+function fly(dir,cb){const card=$('card');if(!card){cb();return}const T={left:'translate3d(-130%,0,0) rotate(-14deg)',right:'translate3d(130%,0,0) rotate(14deg)',up:'translate3d(0,-120%,0)',down:'translate3d(0,60%,0)'}[dir];card.classList.remove('drag');card.style.transform=T;card.style.opacity='0';setTimeout(cb,reduce?0:230)}
+function snap(){const card=$('card');if(card){card.classList.remove('drag');card.style.transform=''}['st-l','st-r','st-u'].forEach(id=>{const s=$(id);if(s)s.style.opacity=0})}
+function shake(){const card=$('card');if(!card)return;card.classList.add('shake');setTimeout(()=>card.classList.remove('shake'),320)}
+function commit(dir,how){if(!D||D.phase!=='read'||D.busy)return;const c=D.cases[D.i];
+ if(dir==='up'){if(D.second<=0){snap();shake();toast('No second opinions left','info');return}D.second--;D.delay++;dots();stopTimer();D.busy=true;ctl('none');toast('Second opinion requested: adds delay','info');fly('up',()=>{const ok=D.r()<.95;done({final:ok?c.truth:!c.truth,second:true})});return}
+ const read=dir==='right';stopTimer();
+ if(how==='timeout'){D.busy=true;ctl('none');D.timedOut=true;revealVisual();toast('Out of time: the AI’s answer was used','info');setTimeout(()=>fly('down',()=>done({final:c.ai,timedOut:true})),reduce?0:750);return}
+ if(D.opts.first){D.myRead=read;D.phase='reveal';D.busy=true;ctl('none');snap();revealVisual();
+  if(c.ai===read){toast('AI agrees with your read','info');setTimeout(()=>fly(read?'right':'left',()=>done({final:read})),reduce?0:750)}
+  else{D.phase='choose';D.busy=false;ctl('choose');toast('AI disagrees with your read. Your call.','info')}
+  return}
+ D.busy=true;ctl('none');fly(dir,()=>done({final:read}))}
+function choose(k){if(!D||D.phase!=='choose'||D.busy)return;D.busy=true;const c=D.cases[D.i],final=k==='keep'?D.myRead:c.ai;ctl('none');fly(final?'right':'left',()=>done({final,switched:k==='switch'}))}
+function done(x){const c=D.cases[D.i];
+ const rec=Object.assign({i:c.i,truth:c.truth,ai:c.ai,aiWrong:c.ai!==c.truth,under:c.under,myRead:D.myRead,second:false,timedOut:D.timedOut,switched:false,disagreed:D.myRead!==null&&D.myRead!==c.ai},x);
+ rec.correct=rec.final===c.truth;rec.followedAI=rec.final===c.ai;D.res.push(rec);
+ let msg,cls;if(rec.correct){msg=rec.second?'Specialist confirms: correct.':'Correct.';cls='ok'}else if(c.truth){msg='Missed cancer.';cls='no'}else{msg='False alarm: unnecessary recall.';cls='no'}
+ if(!rec.correct&&rec.aiWrong&&rec.followedAI)msg+=' The AI was wrong and was followed.';
+ if(rec.correct&&rec.aiWrong&&!rec.second)msg+=' You caught a wrong AI suggestion.';
+ toast(msg,cls,true);$('d-live').textContent=msg;D.phase='result';ctl('none');
+ setTimeout(()=>{D.i++;if(D.i>=N)report();else renderCase()},reduce?300:1000)}
+/* drag and swipe (Pointer Events: one code path for touch, pen and mouse) */
+const stage=$('d-stage');let drag=null,raf=0;
+function thr(){return Math.min(110,stage.clientWidth*.28)}
+stage.addEventListener('pointerdown',e=>{const card=e.target.closest&&e.target.closest('.card');if(!card||!D||D.phase!=='read'||D.busy||(e.pointerType==='mouse'&&e.button!==0))return;try{card.setPointerCapture(e.pointerId)}catch(_){}drag={id:e.pointerId,x:e.clientX,y:e.clientY,dx:0,dy:0,t:performance.now(),card};card.classList.add('drag');e.preventDefault()});
+stage.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;drag.dx=e.clientX-drag.x;drag.dy=e.clientY-drag.y;if(!raf)raf=requestAnimationFrame(paint)});
+function paint(){raf=0;if(!drag)return;const dx=drag.dx,dy=drag.dy,T=thr(),upMode=dy<-T*.4&&Math.abs(dy)>Math.abs(dx);
+ drag.card.style.transform='translate3d('+dx+'px,'+Math.min(0,dy)*.6+'px,0) rotate('+(dx/20)+'deg)';
+ const s=(id,v)=>{const el=$(id);if(el)el.style.opacity=Math.max(0,Math.min(1,v))};s('st-r',upMode?0:dx/T);s('st-l',upMode?0:-dx/T);s('st-u',upMode?-dy/T:0)}
+function endDrag(e){if(!drag||(e&&e.pointerId!==drag.id))return;const d=drag;drag=null;if(raf){cancelAnimationFrame(raf);raf=0}d.card.classList.remove('drag');
+ const T=thr(),dt=Math.max(1,performance.now()-d.t),vx=d.dx/dt;let dir=null;
+ if(d.dy<-T&&Math.abs(d.dy)>Math.abs(d.dx))dir='up';else if(d.dx>T||(d.dx>40&&vx>.5))dir='right';else if(d.dx<-T||(d.dx<-40&&vx<-.5))dir='left';
+ if(dir)commit(dir);else snap()}
+['pointerup','pointercancel','lostpointercapture'].forEach(n=>stage.addEventListener(n,endDrag));
+$('d-ctl').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!D)return;if(b.dataset.d)commit(b.dataset.d);else if(b.dataset.k)choose(b.dataset.k)});
+document.addEventListener('keydown',e=>{if(tab!=='doc'||!D||$('d-play').hidden)return;const m={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up'}[e.key];if(!m)return;e.preventDefault();commit(m)});
+$('d-go').onclick=()=>startShift(Math.floor(Math.random()*9000)+1,readOpts());
+/* report */
+function report(){stopTimer();const R=D.res;$('d-play').hidden=true;$('d-end').hidden=false;window.scrollTo(0,0);
+ const pc=(a,b)=>b?f0(a/b*100):0,corr=R.filter(x=>x.correct).length,aiW=R.filter(x=>x.aiWrong),aiR=R.filter(x=>!x.aiWrong),caught=aiW.filter(x=>x.correct).length,fw=aiW.filter(x=>x.final===x.ai).length;
+ const missed=R.filter(x=>x.truth&&!x.final).length,fa=R.filter(x=>!x.truth&&x.final).length,timed=R.filter(x=>x.timedOut).length,sec=3-D.second;
+ const accR=pc(aiR.filter(x=>x.correct).length,aiR.length),accW=pc(caught,aiW.length);
+ const U=R.filter(x=>x.under),O=R.filter(x=>!x.under),uW=U.filter(x=>x.aiWrong).length;
+ const key=D.opts.first?'first':'ai';(HIST[D.seed]=HIST[D.seed]||{})[key]={corr,accW,fw,caught,nW:aiW.length};
+ const br=(l,v,ref,txt)=>'<div class="barrow'+(ref?' ref':'')+'"><span>'+l+'</span><span class="t"><i style="width:'+v+'%"></i></span><span>'+(txt||v+'%')+'</span></div>';
+ let v;if(fw>=2)v='You followed the AI '+fw+' times when it was wrong. That is blind trust, our Risk 1 (slide 6). In Dratsch et al. (2023), experienced readers fell from 82% to 45.5% on wrong suggestions; you scored '+accW+'%.';
+ else if(fw===1)v='You followed a wrong AI suggestion once. Careful doctors do this too, which is why condition 3 has the doctor read first, log disagreements and train (slide 11).';
+ else v='You caught every wrong AI suggestion you could. That is what condition 3 is designed to make normal: read first, log disagreements, train (slide 11).';
+ if(uW)v+=' The AI was wrong for '+uW+' under-represented patient'+(uW>1?'s':'')+', the gap behind Risk 2 (slide 7); condition 2 tests for it by subgroup.';
+ if(timed)v+=' You ran out of time '+timed+' time'+(timed>1?'s':'')+' and the AI’s answer was used, as in busy hours.';
+ const lg=R.filter(x=>x.aiWrong||x.disagreed).map(x=>'<tr><td>'+(x.i+1)+'</td><td>'+(D.opts.first?(x.myRead?'Abnormal':'Normal'):'n/a')+'</td><td>'+(x.ai?'Abnormal':'Normal')+'</td><td>'+(x.truth?'Abnormal':'Normal')+'</td><td>'+(x.final?'Abnormal':'Normal')+(x.second?' (specialist)':'')+'</td><td class="'+(x.correct?'g':'b')+'">'+(x.correct?'Correct':'Wrong')+'</td></tr>').join('');
+ const H=HIST[D.seed],cmp=H.first&&H.ai?'<div class="panel"><h2>Same patients, two workflows</h2><div class="scroll"><table><tr><th>Workflow</th><th>Correct</th><th>Wrong AI caught</th><th>Wrong AI followed</th></tr><tr><td>AI shown first</td><td>'+H.ai.corr+'/'+N+'</td><td>'+H.ai.caught+'/'+H.ai.nW+'</td><td>'+H.ai.fw+'</td></tr><tr><td>Doctor reads first</td><td>'+H.first.corr+'/'+N+'</td><td>'+H.first.caught+'/'+H.first.nW+'</td><td>'+H.first.fw+'</td></tr></table></div><p class="note">You had seen these patients before the replay, so treat the comparison as a demonstration, not a measurement.</p></div>':'';
+ $('d-end').innerHTML='<div class="panel"><h2>Your shift</h2><div class="tiles"><div class="tile"><b>'+corr+'/'+N+'</b><span>correct decisions</span></div><div class="tile"><b class="'+(fw?'b':'g')+'">'+fw+'</b><span>wrong AI suggestions followed (of '+aiW.length+')</span></div><div class="tile"><b>'+missed+' / '+fa+'</b><span>missed cancers / false alarms</span></div><div class="tile"><b>'+sec+'</b><span>second opinions used (each adds delay)</span></div></div><div class="verdict">'+esc(v)+'</div></div>'+
+ '<div class="panel"><h2>Your accuracy against the study (slide 6)</h2>'+br('You, AI right',accR)+br('You, AI wrong',accW)+br('Study: experienced, AI right',82,1)+br('Study: experienced, AI wrong',45.5,1,'45.5%')+br('Study: novices, AI wrong',20,1,'below 20%')+'<p class="note">Study figures are from Dratsch et al. (2023). Your bars come from only '+aiW.length+' wrong-AI cases, so they swing a lot.</p></div>'+
+ '<div class="panel"><h2>The AI by patient group (slide 7)</h2><p>AI correct for '+pc(U.filter(x=>!x.aiWrong).length,U.length)+'% of under-represented patients ('+U.length+') and '+pc(O.filter(x=>!x.aiWrong).length,O.length)+'% of others ('+O.length+'). In this model the gap is built in as an assumption, in the spirit of Yang et al. (2024).</p></div>'+
+ '<div class="panel"><h2>Disagreement log</h2>'+(lg?'<div class="scroll"><table><tr><th>Patient</th><th>Your first read</th><th>AI</th><th>Truth</th><th>Final</th><th></th></tr>'+lg+'</table></div>':'<p class="note">No disagreements.</p>')+'<p class="note">Logging disagreements is part of condition 3.</p></div>'+cmp+
+ '<div class="row"><button class="pri" id="r-replay">Replay these patients, '+(D.opts.first?'AI shown first':'doctor reads first')+'</button><button id="r-new">New patients</button><button id="r-opt">Change options</button></div>';
+ $('r-replay').onclick=()=>startShift(D.seed,Object.assign({},D.opts,{first:!D.opts.first}));
+ $('r-new').onclick=()=>startShift(Math.floor(Math.random()*9000)+1,D.opts);
+ $('r-opt').onclick=()=>{$('d-end').hidden=true;$('d-start').hidden=false;window.scrollTo(0,0)}}
+ui();
+
+</script>
 </body></html>
